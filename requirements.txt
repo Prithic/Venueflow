@@ -2,3 +2,5 @@ fastapi
 uvicorn
 firebase-admin
 python-dotenv
+pytest
+httpx

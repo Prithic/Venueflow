@@ -6,15 +6,14 @@ from firebase_admin import credentials, db
 import os
 from dotenv import load_dotenv
 
-# Load environment variables for security
+# Load environment variables for secure credential management
 load_dotenv()
 
 app = FastAPI(
     title="VenueFlow API",
-    description="Intelligent backend for stadium crowd coordination."
+    description="Secure backend for stadium crowd coordination."
 )
 
-# CORS Setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -22,16 +21,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Firebase Initialization (Security Focused) ---
+# --- Firebase Initialization ---
 DATABASE_URL = os.getenv("FIREBASE_DATABASE_URL")
-SERVICE_ACCOUNT_PATH = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "serviceAccountKey.json")
+SERVICE_ACCOUNT = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "serviceAccountKey.json")
 
 try:
     if not firebase_admin._apps:
-        cred = credentials.Certificate(SERVICE_ACCOUNT_PATH)
+        cred = credentials.Certificate(SERVICE_ACCOUNT)
         firebase_admin.initialize_app(cred, {'databaseURL': DATABASE_URL})
 except Exception as e:
-    print(f"Firebase Init Error: {e}")
+    print(f"Firebase initialization failed: {e}")
 
 class ChatRequest(BaseModel):
     message: str
@@ -42,34 +41,44 @@ async def health_check():
     Standard health check endpoint to verify system uptime.
     
     Returns:
-        dict: Status and service name.
+        dict: Uptime status and service identifier.
     """
-    return {"status": "online", "service": "VenueFlow AI"}
+    return {"status": "online", "service": "VenueFlow AI Concierge"}
 
 @app.post("/chat")
-async def handle_chat_query(request: ChatRequest):
+async def chat_handler(request: ChatRequest):
     """
-    Asynchronous endpoint to process attendee queries with live stadium context.
-    Uses Firebase Realtime Database to fetch sub-second wait time metrics.
+    Processes attendee queries by integrating real-time stadium congestion data.
+    Implements proactive routing logic based on current wait times.
     
     Args:
-        request (ChatRequest): The incoming message model.
+        request (ChatRequest): Incoming user message model.
         
     Returns:
-        dict: A proactive, data-driven response for crowd coordination.
+        dict: Context-aware AI recommendation.
     """
     try:
         user_msg = request.message.lower()
         queues = db.reference('queues').get() or {}
 
-        # Logic for proactive coordination
-        if "gate" in user_msg:
-            ga = queues.get("gate_a", 0)
-            gb = queues.get("gate_b", 0)
-            winner = "Gate A" if ga < gb else "Gate B"
-            return {"reply": f"Coordination Alert: {winner} is currently the fastest entry point with a {min(ga, gb)} min wait."}
+        # Core logic: If user asks about a location, provide live context and alternatives
+        if "gate a" in user_msg:
+            wait = queues.get("gate_a", 0)
+            reply = f"Gate A currently has a {wait} min wait."
+            if wait > 25:
+                alt_wait = queues.get("gate_b", 0)
+                reply += f" It's congested! Use Gate B instead for a {alt_wait} min entry."
+            return {"reply": reply}
 
-        return {"reply": "I'm your VenueFlow concierge. How can I help you navigate the stadium today?"}
+        if "gate b" in user_msg:
+            wait = queues.get("gate_b", 0)
+            reply = f"Gate B currently has a {wait} min wait."
+            if wait > 25:
+                alt_wait = queues.get("gate_a", 0)
+                reply += f" It's busy! Gate A is faster at {alt_wait} mins."
+            return {"reply": reply}
+
+        return {"reply": "I am monitoring stadium flow. Ask me about gates or food wait times!"}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

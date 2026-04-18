@@ -1,6 +1,6 @@
 # VenueFlow | Stadium Intelligence System
 
-## Chosen Vertical
+## Chosen vertical
 Physical Event Experience
 
 ## Approach and logic
@@ -17,26 +17,3 @@ The solution utilizes a **Reactive-Proactive hybrid architecture**.
 - Stadium zones (Gates, Food Courts) are equipped with IoT occupancy sensors.
 - Attendees have mobile access to the dashboard via a local high-density Wi-Fi network.
 - The system defaults to the "Fastest Entry" recommendation when no specific query is provided.
-
----
-
-## ⚡ Setup & Execution
-
-### 1. Backend Setup
-Create a `.env` file based on `.env.example`.
-
-```bash
-# Install dependencies
-pip install fastapi uvicorn firebase-admin python-dotenv pytest httpx
-
-# Run unit tests
-pytest test_main.py
-
-# Start the production-ready server
-uvicorn main:app --reload
-```
-
-### 2. Simulation Engine
-```bash
-python mock_data_gen.py
-```
