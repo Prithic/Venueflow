@@ -37,4 +37,20 @@ The system is built on a **Stateless API Design** utilizing a **Context-Injectio
 - **Biometric Throughput Analysis**: Analyzing gate efficiency based on attendee biometric verification speed.
 
 ---
-**Championship Version: 3.0.0 (Hardened)**
+
+## Chosen vertical
+AI-powered crowd management system
+
+## Approach and logic
+Uses Firebase real-time data and a reasoning engine to compare all zones and suggest optimal routing.
+
+## How the solution works
+Backend fetches live queue data → reasoning engine analyzes → frontend displays recommendations.
+
+## Assumptions made
+- Queue data is accurate
+- Users follow AI suggestions
+- Firebase is always available
+
+---
+**Championship Version: 3.0.1 (Compliant)**
