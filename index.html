@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VenueFlow | Real-Time Stadium Coordination</title>
+    <meta name="description" content="Intelligent stadium crowd management and attendee coordination dashboard.">
+    
+    <!-- External Assets -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #e5e5e5; }
+        .glass { background: rgba(20, 20, 20, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes pulse-yellow { 0%, 100% { background-color: #f59e0b; } 50% { background-color: #d97706; } }
+        .animate-alert { animation: pulse-yellow 2s infinite ease-in-out; }
+    </style>
+</head>
+<body class="h-screen overflow-hidden flex flex-col">
+
+    <!-- Header -->
+    <header class="p-6 border-b border-white/5 flex justify-between items-center bg-[#080808]" role="banner">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg">VF</div>
+            <h1 class="text-2xl font-black tracking-tight italic uppercase">Venue<span class="text-indigo-500">Flow</span></h1>
+        </div>
+        <div class="flex items-center gap-6">
+            <div class="flex items-center gap-2 px-4 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full" role="status">
+                <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                <span class="text-[10px] font-extrabold tracking-widest text-green-500 uppercase">Live Operations</span>
+            </div>
+            <time id="current-time" class="text-xs font-mono text-white/40"></time>
+        </div>
+    </header>
+
+    <!-- Semantic Main Content -->
+    <main role="main" class="flex-1 flex overflow-hidden p-6 gap-6">
+        
+        <!-- Live Dashboard Section -->
+        <section aria-label="Stadium Queue Metrics" class="flex-1 grid grid-cols-2 gap-6">
+            
+            <!-- Zone Card: Gate A -->
+            <article id="card-gate_a" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40">
+                <header>
+                    <p class="text-white/30 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Entry Point Alpha</p>
+                    <h2 class="text-4xl font-black italic">Gate A</h2>
+                </header>
+                <div class="flex items-baseline gap-3">
+                    <span id="wait-gate_a" class="text-8xl font-black tracking-tighter italic">--</span>
+                    <span class="text-white/20 text-2xl font-bold uppercase">Min</span>
+                </div>
+                <footer id="status-gate_a" aria-live="polite" class="text-[11px] font-black flex items-center gap-3 uppercase tracking-widest text-white/20">
+                    <span class="w-2.5 h-2.5 bg-current rounded-full"></span>
+                    Syncing...
+                </footer>
+            </article>
+
+            <!-- Zone Card: Gate B -->
+            <article id="card-gate_b" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40">
+                <header>
+                    <p class="text-white/30 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Entry Point Beta</p>
+                    <h2 class="text-4xl font-black italic">Gate B</h2>
+                </header>
+                <div class="flex items-baseline gap-3">
+                    <span id="wait-gate_b" class="text-8xl font-black tracking-tighter italic">--</span>
+                    <span class="text-white/20 text-2xl font-bold uppercase">Min</span>
+                </div>
+                <footer id="status-gate_b" aria-live="polite" class="text-[11px] font-black flex items-center gap-3 uppercase tracking-widest text-white/20">
+                    <span class="w-2.5 h-2.5 bg-current rounded-full"></span>
+                    Syncing...
+                </footer>
+            </article>
+
+            <!-- Zone Card: Food Court -->
+            <article id="card-food_court" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40">
+                <header>
+                    <p class="text-white/30 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Hospitality Hub</p>
+                    <h2 class="text-4xl font-black italic">Food Court</h2>
+                </header>
+                <div class="flex items-baseline gap-3">
+                    <span id="wait-food_court" class="text-8xl font-black tracking-tighter italic">--</span>
+                    <span class="text-white/20 text-2xl font-bold uppercase">Min</span>
+                </div>
+                <footer id="status-food_court" aria-live="polite" class="text-[11px] font-black flex items-center gap-3 uppercase tracking-widest text-white/20">
+                    <span class="w-2.5 h-2.5 bg-current rounded-full"></span>
+                    Syncing...
+                </footer>
+            </article>
+
+            <!-- Zone Card: Merch Stand -->
+            <article id="card-merch_stand" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40">
+                <header>
+                    <p class="text-white/30 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Fan Experience</p>
+                    <h2 class="text-4xl font-black italic">Merch Stand</h2>
+                </header>
+                <div class="flex items-baseline gap-3">
+                    <span id="wait-merch_stand" class="text-8xl font-black tracking-tighter italic">--</span>
+                    <span class="text-white/20 text-2xl font-bold uppercase">Min</span>
+                </div>
+                <footer id="status-merch_stand" aria-live="polite" class="text-[11px] font-black flex items-center gap-3 uppercase tracking-widest text-white/20">
+                    <span class="w-2.5 h-2.5 bg-current rounded-full"></span>
+                    Syncing...
+                </footer>
+            </article>
+        </section>
+
+        <!-- AI Assistant Section -->
+        <section aria-label="AI Stadium Concierge" class="w-[480px] glass rounded-[48px] flex flex-col overflow-hidden shadow-2xl">
+            <header class="p-10 border-b border-white/5 bg-white/5">
+                <h2 class="text-2xl font-black tracking-tight uppercase">AI CONCIERGE</h2>
+                <p class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mt-2">Real-Time Coordination Active</p>
+            </header>
+            
+            <div id="chat-box" role="log" aria-live="polite" class="flex-1 overflow-y-auto p-10 flex flex-col gap-6">
+                <div class="bg-indigo-600/10 border border-indigo-500/20 p-6 rounded-3xl rounded-tl-none text-sm leading-relaxed text-indigo-100/90">
+                    Welcome to the venue. I am monitoring all crowd sensors. How can I assist your coordination today?
+                </div>
+            </div>
+
+            <footer class="p-8 bg-[#0a0a0a] border-t border-white/5">
+                <form id="chat-form" class="relative">
+                    <label for="chat-input" class="sr-only">Ask the AI Concierge</label>
+                    <input id="chat-input" type="text" aria-label="Ask the stadium concierge" placeholder="Which gate is fastest?" 
+                        class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm focus:outline-none focus:border-indigo-500 transition-all pr-20">
+                    <button type="submit" aria-label="Send Message" class="absolute right-2 top-2 w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 transition-all">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                    </button>
+                </form>
+            </footer>
+        </section>
+    </main>
+
+    <script>
+        // ... (existing Firebase and chat logic) ...
+        const firebaseConfig = {
+            apiKey: "AIzaSyAbE7chJEimxQG5nBrsxiEvkfS2d8H0VwQ",
+            authDomain: "venueflow-945cc.firebaseapp.com",
+            projectId: "venueflow-945cc",
+            databaseURL: "https://venueflow-945cc-default-rtdb.asia-southeast1.firebasedatabase.app",
+            measurementId: "G-0CS1SLREGZ"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const analytics = firebase.analytics();
+
+        const zoneIds = ['gate_a', 'gate_b', 'food_court', 'merch_stand'];
+        zoneIds.forEach(id => {
+            database.ref(`queues/${id}`).on('value', (snapshot) => {
+                const wait = snapshot.val();
+                if (wait !== null) updateZoneUI(id, wait);
+            });
+        });
+
+        function updateZoneUI(id, wait) {
+            const waitEl = document.getElementById(`wait-${id}`);
+            const statusEl = document.getElementById(`status-${id}`);
+            waitEl.innerText = wait;
+            
+            if (wait < 10) {
+                statusEl.className = "text-[11px] font-black flex items-center gap-3 uppercase tracking-widest text-green-500";
+                statusEl.innerHTML = '<span class="w-2.5 h-2.5 bg-green-500 rounded-full"></span>Optimal Flow';
+            } else if (wait <= 25) {
+                statusEl.className = "text-[11px] font-black flex items-center gap-3 uppercase tracking-widest text-yellow-500";
+                statusEl.innerHTML = '<span class="w-2.5 h-2.5 bg-yellow-500 rounded-full"></span>Moderate Delay';
+            } else {
+                statusEl.className = "text-[11px] font-black flex items-center gap-3 uppercase tracking-widest text-red-500";
+                statusEl.innerHTML = '<span class="w-2.5 h-2.5 bg-red-500 rounded-full"></span>Heavy Congestion';
+            }
+        }
+
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatBox = document.getElementById('chat-box');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+
+            analytics.logEvent('chat_initiated', { query: msg });
+            addMessage(msg, true);
+            chatInput.value = '';
+
+            try {
+                const response = await fetch('http://localhost:8000/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                const data = await response.json();
+                addMessage(data.reply, false);
+            } catch (err) {
+                addMessage("System offline. Please refer to dashboard metrics.", false);
+            }
+        });
+
+        function addMessage(text, isUser) {
+            const div = document.createElement('div');
+            div.className = isUser 
+                ? "bg-white/5 border border-white/10 p-5 rounded-3xl rounded-tr-none text-sm text-white/70 self-end max-w-[80%]"
+                : "bg-indigo-600/10 border border-indigo-500/20 p-5 rounded-3xl rounded-tl-none text-sm leading-relaxed text-indigo-100/90 self-start max-w-[80%]";
+            div.innerText = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        setInterval(() => {
+            document.getElementById('current-time').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+    </script>
+</body>
+</html>
