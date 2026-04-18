@@ -1,82 +1,355 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VenueFlow | Command Center</title>
-    <!-- Firebase SDKs -->
+    <title>VenueFlow | AI Command Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body { background: #050505; color: #fff; font-family: sans-serif; }
-        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at top left, #0f172a, #020617); color: #f8fafc; }
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glow-indigo { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
+        .status-pulse { animation: pulse-glow 2s infinite; }
+        @keyframes pulse-glow { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .gradient-text { background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
-<body class="h-screen flex flex-col p-8">
-    <header class="flex justify-between items-center mb-12" role="banner">
-        <h1 class="text-3xl font-bold tracking-tighter">VENUE<span class="text-indigo-500">FLOW</span></h1>
-        <div class="px-4 py-2 glass rounded-full text-xs font-bold uppercase tracking-widest text-indigo-400" role="status">Live Operations</div>
+<body class="min-h-screen flex flex-col p-4 md:p-8 gap-6 overflow-x-hidden">
+
+    <!-- Header & AI Orchestrator -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/5 p-6 rounded-[2rem] border border-white/10 glow-indigo">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.5)]">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tighter italic uppercase">Venue<span class="text-indigo-400">Flow</span></h1>
+                <p class="text-[10px] font-bold text-white/30 tracking-[0.3em] uppercase">AI Command Center v2.0</p>
+            </div>
+        </div>
+
+        <!-- AI Insight Banner -->
+        <div id="ai-insight-banner" class="flex-1 max-w-2xl bg-indigo-500/10 border border-indigo-500/20 px-6 py-4 rounded-2xl flex items-center gap-4 transition-all duration-500 opacity-0 transform translate-y-2">
+            <div class="flex-shrink-0 w-8 h-8 bg-indigo-500/20 rounded-full flex items-center justify-center">
+                <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span></span>
+            </div>
+            <p id="ai-recommendation" class="text-sm font-semibold text-indigo-100 italic">Analyzing crowd patterns for optimal routing...</p>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden lg:block">
+                <p id="live-timer" class="text-xs font-mono text-white/40">SYNCING...</p>
+                <p class="text-[10px] font-black text-green-400 uppercase tracking-widest">Live Operations</p>
+            </div>
+            <div class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center bg-white/5">
+                <svg class="w-5 h-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+        </div>
     </header>
 
-    <main class="flex-1 grid grid-cols-12 gap-8" role="main">
-        <!-- Dashboard -->
-        <section class="col-span-8 grid grid-cols-2 gap-8" aria-label="Real-time Metrics">
-            <article class="glass p-8 rounded-3xl" role="region" aria-labelledby="ga-h">
-                <h2 id="ga-h" class="text-white/40 text-xs font-bold uppercase mb-4">Gate A</h2>
-                <div class="text-6xl font-bold italic" id="v-ga">--</div>
-                <img src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=10" alt="Status indicator" class="hidden">
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+        
+        <!-- Metrics Grid -->
+        <section class="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6" role="main">
+            
+            <!-- Gate A Card -->
+            <article id="card-gate_a" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:bg-white/[0.08] hover:scale-[1.02] cursor-default">
+                <header class="flex justify-between items-start">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-indigo-500/50 transition-colors">
+                            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-white/90 group-hover:text-indigo-400 transition-colors">Gate A</h2>
+                            <p class="text-[10px] font-black text-white/20 uppercase tracking-widest">Entry North</p>
+                        </div>
+                    </div>
+                    <span id="label-gate_a" class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/40">Status Syncing</span>
+                </header>
+                <div class="my-8">
+                    <p class="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-1">Estimated Wait Time</p>
+                    <div class="flex items-baseline gap-2">
+                        <span id="wait-gate_a" class="text-7xl font-black tracking-tighter italic">--</span>
+                        <span class="text-xl font-bold text-white/20 uppercase">Min</span>
+                    </div>
+                </div>
+                <footer class="flex items-center justify-between border-t border-white/5 pt-4">
+                    <div class="flex items-center gap-2">
+                        <div id="dot-gate_a" class="w-2 h-2 rounded-full bg-white/20"></div>
+                        <span id="desc-gate_a" class="text-[11px] font-bold text-white/40 uppercase">Connecting...</span>
+                    </div>
+                    <p class="text-[9px] font-mono text-white/20 uppercase">Last updated: Just now</p>
+                </footer>
             </article>
-            <article class="glass p-8 rounded-3xl" role="region" aria-labelledby="gb-h">
-                <h2 id="gb-h" class="text-white/40 text-xs font-bold uppercase mb-4">Gate B</h2>
-                <div class="text-6xl font-bold italic" id="v-gb">--</div>
+
+            <!-- Gate B Card -->
+            <article id="card-gate_b" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:bg-white/[0.08] hover:scale-[1.02] cursor-default">
+                <header class="flex justify-between items-start">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-indigo-500/50 transition-colors">
+                            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-white/90 group-hover:text-indigo-400 transition-colors">Gate B</h2>
+                            <p class="text-[10px] font-black text-white/20 uppercase tracking-widest">Entry South</p>
+                        </div>
+                    </div>
+                    <span id="label-gate_b" class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/40">Status Syncing</span>
+                </header>
+                <div class="my-8">
+                    <p class="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-1">Estimated Wait Time</p>
+                    <div class="flex items-baseline gap-2">
+                        <span id="wait-gate_b" class="text-7xl font-black tracking-tighter italic">--</span>
+                        <span class="text-xl font-bold text-white/20 uppercase">Min</span>
+                    </div>
+                </div>
+                <footer class="flex items-center justify-between border-t border-white/5 pt-4">
+                    <div class="flex items-center gap-2">
+                        <div id="dot-gate_b" class="w-2 h-2 rounded-full bg-white/20"></div>
+                        <span id="desc-gate_b" class="text-[11px] font-bold text-white/40 uppercase">Connecting...</span>
+                    </div>
+                    <p class="text-[9px] font-mono text-white/20 uppercase">Last updated: Just now</p>
+                </footer>
+            </article>
+
+            <!-- Food Court Card -->
+            <article id="card-food_court" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:bg-white/[0.08] hover:scale-[1.02] cursor-default">
+                <header class="flex justify-between items-start">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-indigo-500/50 transition-colors">
+                            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-1.5-.454M3 8V4a1 1 0 011-1h16a1 1 0 011 1v4M3 12v7a2 2 0 002 2h14a2 2 0 002-2v-7"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-white/90 group-hover:text-indigo-400 transition-colors">Food Court</h2>
+                            <p class="text-[10px] font-black text-white/20 uppercase tracking-widest">Level 2 Plaza</p>
+                        </div>
+                    </div>
+                    <span id="label-food_court" class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/40">Status Syncing</span>
+                </header>
+                <div class="my-8">
+                    <p class="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-1">Estimated Wait Time</p>
+                    <div class="flex items-baseline gap-2">
+                        <span id="wait-food_court" class="text-7xl font-black tracking-tighter italic">--</span>
+                        <span class="text-xl font-bold text-white/20 uppercase">Min</span>
+                    </div>
+                </div>
+                <footer class="flex items-center justify-between border-t border-white/5 pt-4">
+                    <div class="flex items-center gap-2">
+                        <div id="dot-food_court" class="w-2 h-2 rounded-full bg-white/20"></div>
+                        <span id="desc-food_court" class="text-[11px] font-bold text-white/40 uppercase">Connecting...</span>
+                    </div>
+                    <p class="text-[9px] font-mono text-white/20 uppercase">Last updated: Just now</p>
+                </footer>
+            </article>
+
+            <!-- Merch Card -->
+            <article id="card-merch_stand" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:bg-white/[0.08] hover:scale-[1.02] cursor-default">
+                <header class="flex justify-between items-start">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-indigo-500/50 transition-colors">
+                            <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-white/90 group-hover:text-indigo-400 transition-colors">Merch Stand</h2>
+                            <p class="text-[10px] font-black text-white/20 uppercase tracking-widest">Main Lobby</p>
+                        </div>
+                    </div>
+                    <span id="label-merch_stand" class="px-3 py-1 bg-white/5 rounded-full text-[10px] font-bold uppercase tracking-widest text-white/40">Status Syncing</span>
+                </header>
+                <div class="my-8">
+                    <p class="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-1">Estimated Wait Time</p>
+                    <div class="flex items-baseline gap-2">
+                        <span id="wait-merch_stand" class="text-7xl font-black tracking-tighter italic">--</span>
+                        <span class="text-xl font-bold text-white/20 uppercase">Min</span>
+                    </div>
+                </div>
+                <footer class="flex items-center justify-between border-t border-white/5 pt-4">
+                    <div class="flex items-center gap-2">
+                        <div id="dot-merch_stand" class="w-2 h-2 rounded-full bg-white/20"></div>
+                        <span id="desc-merch_stand" class="text-[11px] font-bold text-white/40 uppercase">Connecting...</span>
+                    </div>
+                    <p class="text-[9px] font-mono text-white/20 uppercase">Last updated: Just now</p>
+                </footer>
             </article>
         </section>
 
-        <!-- Chat -->
-        <section class="col-span-4 glass rounded-3xl flex flex-col overflow-hidden" aria-label="AI Concierge">
-            <div id="chat" class="flex-1 p-6 overflow-y-auto text-sm" role="log" aria-live="polite"></div>
-            <form id="f" class="p-4 bg-white/5 border-t border-white/5 flex gap-2">
-                <input type="text" id="i" placeholder="Ask about Gate A..." 
-                       class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
-                       aria-label="Ask the AI Concierge">
-                <button type="submit" class="bg-indigo-600 px-6 py-3 rounded-xl font-bold text-sm" aria-label="Send Message">Send</button>
-            </form>
-        </section>
+        <!-- AI Side Panel -->
+        <aside class="lg:col-span-4 flex flex-col gap-6 min-h-0">
+            <div class="flex-1 glass rounded-[2.5rem] flex flex-col overflow-hidden glow-indigo">
+                <header class="p-8 border-b border-white/5 bg-white/[0.02]">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
+                        <h2 class="text-lg font-bold tracking-tight uppercase">AI Concierge</h2>
+                    </div>
+                    <p class="text-[10px] font-bold text-white/30 uppercase tracking-widest">Venue Intelligence Layer</p>
+                </header>
+                
+                <div id="chat-box" class="flex-1 overflow-y-auto p-8 flex flex-col gap-6 no-scrollbar" role="log" aria-live="polite">
+                    <div class="bg-indigo-600/10 border border-indigo-500/20 p-5 rounded-[1.5rem] rounded-tl-none text-sm leading-relaxed text-indigo-100/90 shadow-lg">
+                        Stadium sensors synchronized. I am ready to optimize your venue experience. How can I help you navigate today?
+                    </div>
+                </div>
+
+                <footer class="p-6 bg-black/20 border-t border-white/5">
+                    <form id="chat-form" class="relative group">
+                        <input id="chat-input" type="text" placeholder="Which gate is fastest?" 
+                               class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white/[0.08] transition-all pr-20 placeholder:text-white/20"
+                               aria-label="Message the AI Assistant">
+                        <button type="submit" class="absolute right-2 top-2 w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 transition-all shadow-lg active:scale-95" aria-label="Send">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                        </button>
+                    </form>
+                </footer>
+            </div>
+            
+            <!-- Coordination Card -->
+            <div class="glass rounded-[2rem] p-6 flex items-center gap-4 border-l-4 border-indigo-500">
+                <div class="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-xl">🤖</div>
+                <div>
+                    <h3 class="text-xs font-black uppercase tracking-widest text-indigo-400 mb-1">Live Intelligence</h3>
+                    <p class="text-[10px] text-white/50 leading-relaxed">Crowd sensors are reporting optimal flow across all hospitality hubs.</p>
+                </div>
+            </div>
+        </aside>
     </main>
 
     <script>
-        const config = { databaseURL: "https://venueflow-945cc-default-rtdb.asia-southeast1.firebasedatabase.app" };
-        firebase.initializeApp(config);
-        const r = firebase.database().ref('queues');
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAbE7chJEimxQG5nBrsxiEvkfS2d8H0VwQ",
+            authDomain: "venueflow-945cc.firebaseapp.com",
+            projectId: "venueflow-945cc",
+            databaseURL: "https://venueflow-945cc-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        r.on('value', s => {
-            const d = s.val();
-            document.getElementById('v-ga').innerText = (d && d.gate_a ? d.gate_a : 0) + 'm';
-            document.getElementById('v-gb').innerText = (d && d.gate_b ? d.gate_b : 0) + 'm';
+        // UI Update Logic
+        const zoneIds = ['gate_a', 'gate_b', 'food_court', 'merch_stand'];
+        
+        zoneIds.forEach(id => {
+            db.ref(`queues/${id}`).on('value', (snap) => {
+                const val = snap.val() || 0;
+                updateCard(id, val);
+            });
         });
 
-        document.getElementById('f').onsubmit = async (e) => {
+        function updateCard(id, val) {
+            const waitEl = document.getElementById(`wait-${id}`);
+            const labelEl = document.getElementById(`label-${id}`);
+            const dotEl = document.getElementById(`dot-${id}`);
+            const descEl = document.getElementById(`desc-${id}`);
+            const cardEl = document.getElementById(`card-${id}`);
+
+            waitEl.innerText = val;
+            
+            // Color Logic
+            let color, status, desc;
+            if (val < 10) {
+                color = 'text-green-400';
+                status = 'Optimal';
+                desc = 'Fast Flowing';
+                dotEl.className = 'w-2 h-2 rounded-full bg-green-500 shadow-[0_0_10px_#10b981]';
+                labelEl.className = 'px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest text-green-400';
+            } else if (val <= 25) {
+                color = 'text-yellow-400';
+                status = 'Moderate';
+                desc = 'Average Wait';
+                dotEl.className = 'w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_10px_#f59e0b]';
+                labelEl.className = 'px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest text-yellow-400';
+            } else {
+                color = 'text-red-400';
+                status = 'Critical';
+                desc = 'High Congestion';
+                dotEl.className = 'w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444] status-pulse';
+                labelEl.className = 'px-3 py-1 bg-red-500/10 border border-red-500/20 rounded-full text-[10px] font-bold uppercase tracking-widest text-red-400';
+            }
+
+            waitEl.className = `text-7xl font-black tracking-tighter italic ${color} transition-colors duration-500`;
+            labelEl.innerText = status;
+            descEl.innerText = desc;
+            descEl.className = `text-[11px] font-bold ${color} uppercase transition-colors duration-500`;
+
+            // Smart Insight Logic
+            generateAIIntelligence();
+        }
+
+        async function generateAIIntelligence() {
+            const snap = await db.ref('queues').once('value');
+            const data = snap.val() || {};
+            const banner = document.getElementById('ai-insight-banner');
+            const text = document.getElementById('ai-recommendation');
+            
+            let advice = "Stadium flow is currently balanced.";
+            let alert = false;
+
+            if (data.gate_a > 25 && data.gate_b <= 25) {
+                advice = `Gate A Congested → Use Gate B for immediate entry (${data.gate_b}m wait)`;
+                alert = true;
+            } else if (data.gate_b > 25 && data.gate_a <= 25) {
+                advice = `Gate B Congested → Use Gate A for immediate entry (${data.gate_a}m wait)`;
+                alert = true;
+            }
+
+            text.innerText = advice;
+            banner.style.opacity = "1";
+            banner.style.transform = "translateY(0)";
+            
+            if (alert) {
+                banner.className = "flex-1 max-w-2xl bg-red-500/10 border border-red-500/30 px-6 py-4 rounded-2xl flex items-center gap-4 transition-all duration-500";
+                text.className = "text-sm font-bold text-red-400 italic";
+            } else {
+                banner.className = "flex-1 max-w-2xl bg-indigo-500/10 border border-indigo-500/20 px-6 py-4 rounded-2xl flex items-center gap-4 transition-all duration-500";
+                text.className = "text-sm font-semibold text-indigo-100 italic";
+            }
+        }
+
+        // Chat Logic
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatBox = document.getElementById('chat-box');
+
+        chatForm.onsubmit = async (e) => {
             e.preventDefault();
-            const i = document.getElementById('i');
-            const c = document.getElementById('chat');
-            const m = i.value;
-            if(!m) return;
-            c.innerHTML += `<div class="mb-4 text-white/50">You: ${m}</div>`;
-            i.value = '';
+            const msg = chatInput.value.trim();
+            if (!msg) return;
+
+            // User Bubble
+            addBubble(msg, true);
+            chatInput.value = '';
+
             try {
                 const res = await fetch('http://localhost:8000/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({message: m})
+                    body: JSON.stringify({ message: msg })
                 });
                 const data = await res.json();
-                c.innerHTML += `<div class="mb-4 text-indigo-400">AI: ${data.reply}</div>`;
-            } catch(e) {
-                c.innerHTML += `<div class="mb-4 text-red-400">Error: Service Offline</div>`;
+                addBubble(data.reply, false);
+            } catch (err) {
+                addBubble("Service unavailable. Live sensors are still active.", false);
             }
-            c.scrollTop = c.scrollHeight;
         };
+
+        function addBubble(text, isUser) {
+            const div = document.createElement('div');
+            if (isUser) {
+                div.className = "self-end max-w-[85%] bg-white/5 border border-white/10 p-4 rounded-[1.5rem] rounded-tr-none text-sm text-white/70 shadow-lg";
+            } else {
+                div.className = "self-start max-w-[85%] bg-indigo-600/10 border border-indigo-500/20 p-5 rounded-[1.5rem] rounded-tl-none text-sm leading-relaxed text-indigo-100/90 shadow-xl";
+            }
+            div.innerText = text;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        setInterval(() => {
+            document.getElementById('live-timer').innerText = new Date().toLocaleTimeString();
+        }, 1000);
     </script>
 </body>
 </html>
