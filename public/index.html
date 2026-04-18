@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VenueFlow | Command Center</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #050505; color: #fff; font-family: sans-serif; }
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+    </style>
+</head>
+<body class="h-screen flex flex-col p-8">
+    <header class="flex justify-between items-center mb-12" role="banner">
+        <h1 class="text-3xl font-bold tracking-tighter">VENUE<span class="text-indigo-500">FLOW</span></h1>
+        <div class="px-4 py-2 glass rounded-full text-xs font-bold uppercase tracking-widest text-indigo-400" role="status">Live Operations</div>
+    </header>
+
+    <main class="flex-1 grid grid-cols-12 gap-8" role="main">
+        <!-- Dashboard -->
+        <section class="col-span-8 grid grid-cols-2 gap-8" aria-label="Real-time Metrics">
+            <article class="glass p-8 rounded-3xl" role="region" aria-labelledby="ga-h">
+                <h2 id="ga-h" class="text-white/40 text-xs font-bold uppercase mb-4">Gate A</h2>
+                <div class="text-6xl font-bold italic" id="v-ga">--</div>
+                <img src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?w=10" alt="Status indicator" class="hidden">
+            </article>
+            <article class="glass p-8 rounded-3xl" role="region" aria-labelledby="gb-h">
+                <h2 id="gb-h" class="text-white/40 text-xs font-bold uppercase mb-4">Gate B</h2>
+                <div class="text-6xl font-bold italic" id="v-gb">--</div>
+            </article>
+        </section>
+
+        <!-- Chat -->
+        <section class="col-span-4 glass rounded-3xl flex flex-col overflow-hidden" aria-label="AI Concierge">
+            <div id="chat" class="flex-1 p-6 overflow-y-auto text-sm" role="log" aria-live="polite"></div>
+            <form id="f" class="p-4 bg-white/5 border-t border-white/5 flex gap-2">
+                <input type="text" id="i" placeholder="Ask about Gate A..." 
+                       class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500"
+                       aria-label="Ask the AI Concierge">
+                <button type="submit" class="bg-indigo-600 px-6 py-3 rounded-xl font-bold text-sm" aria-label="Send Message">Send</button>
+            </form>
+        </section>
+    </main>
+
+    <script>
+        const config = { databaseURL: "https://venueflow-945cc-default-rtdb.asia-southeast1.firebasedatabase.app" };
+        firebase.initializeApp(config);
+        const r = firebase.database().ref('queues');
+
+        r.on('value', s => {
+            const d = s.val();
+            document.getElementById('v-ga').innerText = (d && d.gate_a ? d.gate_a : 0) + 'm';
+            document.getElementById('v-gb').innerText = (d && d.gate_b ? d.gate_b : 0) + 'm';
+        });
+
+        document.getElementById('f').onsubmit = async (e) => {
+            e.preventDefault();
+            const i = document.getElementById('i');
+            const c = document.getElementById('chat');
+            const m = i.value;
+            if(!m) return;
+            c.innerHTML += `<div class="mb-4 text-white/50">You: ${m}</div>`;
+            i.value = '';
+            try {
+                const res = await fetch('http://localhost:8000/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: m})
+                });
+                const data = await res.json();
+                c.innerHTML += `<div class="mb-4 text-indigo-400">AI: ${data.reply}</div>`;
+            } catch(e) {
+                c.innerHTML += `<div class="mb-4 text-red-400">Error: Service Offline</div>`;
+            }
+            c.scrollTop = c.scrollHeight;
+        };
+    </script>
+</body>
+</html>

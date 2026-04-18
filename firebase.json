@@ -1,28 +1,18 @@
 {
-  "functions": [
-    {
-      "source": "venueflow/backend",
-      "codebase": "default",
-      "ignore": [
-        "venv",
-        ".git",
-        "mock_data_gen.py",
-        "serviceAccountKey.json"
-      ]
-    }
-  ],
   "hosting": {
-    "public": "venueflow/frontend",
+    "public": "public",
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "/chat",
-        "function": "venueflow_api"
-      }
+      "**/node_modules/**",
+      "main.py",
+      "mock_data_gen.py",
+      "test_main.py",
+      "serviceAccountKey.json",
+      "requirements.txt",
+      "README.md",
+      "deployment_guide.md",
+      ".env.example"
     ]
   }
 }
