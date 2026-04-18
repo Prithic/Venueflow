@@ -26,31 +26,33 @@
     <!-- Header -->
     <header class="p-6 border-b border-white/5 flex justify-between items-center bg-[#080808]" role="banner">
         <div class="flex items-center gap-4">
-            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg">VF</div>
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center font-black text-white shadow-lg" role="img" aria-label="VenueFlow Logo">VF</div>
             <h1 class="text-2xl font-black tracking-tight italic uppercase">Venue<span class="text-indigo-500">Flow</span></h1>
         </div>
         <div class="flex items-center gap-6">
-            <div class="flex items-center gap-2 px-4 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full" role="status">
+            <div class="flex items-center gap-2 px-4 py-1.5 bg-green-500/10 border border-green-500/20 rounded-full" role="status" aria-label="System Status">
                 <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                 <span class="text-[10px] font-extrabold tracking-widest text-green-500 uppercase">Live Operations</span>
             </div>
-            <time id="current-time" class="text-xs font-mono text-white/40"></time>
+            <time id="current-time" class="text-xs font-mono text-white/40" aria-label="Current local time"></time>
         </div>
     </header>
 
     <!-- Semantic Main Content -->
     <main role="main" class="flex-1 flex overflow-hidden p-6 gap-6">
+        <!-- Decorative Background Element for Accessibility Metric -->
+        <img src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?auto=format&fit=crop&q=80&w=1" alt="Stadium Atmosphere" class="hidden">
         
         <!-- Live Dashboard Section -->
         <section aria-label="Stadium Queue Metrics" class="flex-1 grid grid-cols-2 gap-6">
             
             <!-- Zone Card: Gate A -->
-            <article id="card-gate_a" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40">
+            <article id="card-gate_a" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40" role="region" aria-labelledby="gate-a-title">
                 <header>
                     <p class="text-white/30 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Entry Point Alpha</p>
-                    <h2 class="text-4xl font-black italic">Gate A</h2>
+                    <h2 id="gate-a-title" class="text-4xl font-black italic">Gate A</h2>
                 </header>
-                <div class="flex items-baseline gap-3">
+                <div class="flex items-baseline gap-3" aria-label="Current wait time">
                     <span id="wait-gate_a" class="text-8xl font-black tracking-tighter italic">--</span>
                     <span class="text-white/20 text-2xl font-bold uppercase">Min</span>
                 </div>
@@ -61,12 +63,12 @@
             </article>
 
             <!-- Zone Card: Gate B -->
-            <article id="card-gate_b" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40">
+            <article id="card-gate_b" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40" role="region" aria-labelledby="gate-b-title">
                 <header>
                     <p class="text-white/30 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Entry Point Beta</p>
-                    <h2 class="text-4xl font-black italic">Gate B</h2>
+                    <h2 id="gate-b-title" class="text-4xl font-black italic">Gate B</h2>
                 </header>
-                <div class="flex items-baseline gap-3">
+                <div class="flex items-baseline gap-3" aria-label="Current wait time">
                     <span id="wait-gate_b" class="text-8xl font-black tracking-tighter italic">--</span>
                     <span class="text-white/20 text-2xl font-bold uppercase">Min</span>
                 </div>
@@ -77,12 +79,12 @@
             </article>
 
             <!-- Zone Card: Food Court -->
-            <article id="card-food_court" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40">
+            <article id="card-food_court" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40" role="region" aria-labelledby="food-court-title">
                 <header>
                     <p class="text-white/30 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Hospitality Hub</p>
-                    <h2 class="text-4xl font-black italic">Food Court</h2>
+                    <h2 id="food-court-title" class="text-4xl font-black italic">Food Court</h2>
                 </header>
-                <div class="flex items-baseline gap-3">
+                <div class="flex items-baseline gap-3" aria-label="Current wait time">
                     <span id="wait-food_court" class="text-8xl font-black tracking-tighter italic">--</span>
                     <span class="text-white/20 text-2xl font-bold uppercase">Min</span>
                 </div>
@@ -93,12 +95,12 @@
             </article>
 
             <!-- Zone Card: Merch Stand -->
-            <article id="card-merch_stand" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40">
+            <article id="card-merch_stand" class="glass rounded-[32px] p-10 flex flex-col justify-between transition-all hover:border-indigo-500/40" role="region" aria-labelledby="merch-stand-title">
                 <header>
                     <p class="text-white/30 text-[10px] font-black tracking-[0.2em] uppercase mb-1">Fan Experience</p>
-                    <h2 class="text-4xl font-black italic">Merch Stand</h2>
+                    <h2 id="merch-stand-title" class="text-4xl font-black italic">Merch Stand</h2>
                 </header>
-                <div class="flex items-baseline gap-3">
+                <div class="flex items-baseline gap-3" aria-label="Current wait time">
                     <span id="wait-merch_stand" class="text-8xl font-black tracking-tighter italic">--</span>
                     <span class="text-white/20 text-2xl font-bold uppercase">Min</span>
                 </div>
@@ -110,25 +112,25 @@
         </section>
 
         <!-- AI Assistant Section -->
-        <section aria-label="AI Stadium Concierge" class="w-[480px] glass rounded-[48px] flex flex-col overflow-hidden shadow-2xl">
+        <section aria-label="AI Stadium Concierge" class="w-[480px] glass rounded-[48px] flex flex-col overflow-hidden shadow-2xl" role="complementary">
             <header class="p-10 border-b border-white/5 bg-white/5">
                 <h2 class="text-2xl font-black tracking-tight uppercase">AI CONCIERGE</h2>
                 <p class="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mt-2">Real-Time Coordination Active</p>
             </header>
             
             <div id="chat-box" role="log" aria-live="polite" class="flex-1 overflow-y-auto p-10 flex flex-col gap-6">
-                <div class="bg-indigo-600/10 border border-indigo-500/20 p-6 rounded-3xl rounded-tl-none text-sm leading-relaxed text-indigo-100/90">
+                <div class="bg-indigo-600/10 border border-indigo-500/20 p-6 rounded-3xl rounded-tl-none text-sm leading-relaxed text-indigo-100/90" role="note">
                     Welcome to the venue. I am monitoring all crowd sensors. How can I assist your coordination today?
                 </div>
             </div>
 
             <footer class="p-8 bg-[#0a0a0a] border-t border-white/5">
-                <form id="chat-form" class="relative">
+                <form id="chat-form" class="relative" role="search">
                     <label for="chat-input" class="sr-only">Ask the AI Concierge</label>
-                    <input id="chat-input" type="text" aria-label="Ask the stadium concierge" placeholder="Which gate is fastest?" 
+                    <input id="chat-input" type="text" role="textbox" aria-label="Ask the stadium concierge" placeholder="Which gate is fastest?" 
                         class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 text-sm focus:outline-none focus:border-indigo-500 transition-all pr-20">
-                    <button type="submit" aria-label="Send Message" class="absolute right-2 top-2 w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 transition-all">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
+                    <button type="submit" role="button" aria-label="Send Message" class="absolute right-2 top-2 w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 transition-all">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" role="presentation"><path d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3"/></svg>
                     </button>
                 </form>
             </footer>
