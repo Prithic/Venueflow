@@ -1,0 +1,28 @@
+{
+  "functions": [
+    {
+      "source": "venueflow/backend",
+      "codebase": "default",
+      "ignore": [
+        "venv",
+        ".git",
+        "mock_data_gen.py",
+        "serviceAccountKey.json"
+      ]
+    }
+  ],
+  "hosting": {
+    "public": "venueflow/frontend",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/chat",
+        "function": "venueflow_api"
+      }
+    ]
+  }
+}

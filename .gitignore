@@ -1,0 +1,7 @@
+serviceAccountKey.json
+__pycache__/
+venv/
+.env
+.firebase/
+.vscode/
+*.pyc
