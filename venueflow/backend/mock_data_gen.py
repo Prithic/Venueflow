@@ -3,24 +3,33 @@ from firebase_admin import credentials, db
 import random
 import time
 import os
+from dotenv import load_dotenv
 
-# ==========================================
-# FIREBASE CONFIGURATION (ASIAN REGION)
-# ==========================================
-DATABASE_URL = "https://venueflow-945cc-default-rtdb.asia-southeast1.firebasedatabase.app"
+# Load environment variables for security
+load_dotenv()
 
-base_path = os.path.dirname(os.path.abspath(__file__))
-key_path = os.path.join(base_path, "serviceAccountKey.json")
+def initialize_orchestration():
+    """
+    Initializes the Firebase Admin SDK using environment variables.
+    Ensures secure credential management and cross-region compatibility.
+    """
+    database_url = os.getenv("FIREBASE_DATABASE_URL")
+    service_account = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "serviceAccountKey.json")
 
-try:
-    cred = credentials.Certificate(key_path)
-    firebase_admin.initialize_app(cred, {'databaseURL': DATABASE_URL})
-    print(f"Orchestration Engine Live: {DATABASE_URL}")
-except Exception as e:
-    print(f"CRITICAL ERROR: {e}")
-    exit()
+    try:
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(service_account)
+            firebase_admin.initialize_app(cred, {'databaseURL': database_url})
+            print(f"Orchestration Engine Live: {database_url}")
+    except Exception as e:
+        print(f"CRITICAL ERROR: {e}")
+        exit()
 
 def simulate_orchestration():
+    """
+    Main simulation loop for stadium crowd orchestration.
+    Generates mock sensor data and pushes real-time routing alerts to Firebase.
+    """
     print("--- VenueFlow Crowd Orchestration Active ---")
     while True:
         try:
@@ -62,4 +71,5 @@ def simulate_orchestration():
         time.sleep(5)
 
 if __name__ == "__main__":
+    initialize_orchestration()
     simulate_orchestration()
