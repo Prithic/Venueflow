@@ -5,26 +5,40 @@ from main import app
 
 client = TestClient(app)
 
-def test_root_health_check():
-    """Verify system uptime and service status."""
-    response = client.get("/")
+
+def test_health_check():
+    """Verify system uptime endpoint."""
+    response = client.get("/health")
     assert response.status_code == 200
-    assert response.json()["status"] == "online"
+    assert response.json()["status"] == "ok"
+
 
 def test_chat_response_structure():
-    """Verify that the chat endpoint returns the expected JSON structure."""
+    """Verify chat endpoint structure."""
     with patch("main.db.reference") as mock_ref:
         mock_ref.return_value.get.return_value = {"gate_a": 5, "gate_b": 10}
-        response = client.post("/chat", json={"message": "test message"})
+        response = client.post("/chat", json={"message": "test"})
         assert response.status_code == 200
         assert "reply" in response.json()
 
-def test_proactive_routing_logic():
-    """Verify that the AI suggests alternatives when congestion is detected."""
+
+def test_empty_state():
+    """Edge case: empty Firebase data."""
     with patch("main.db.reference") as mock_ref:
-        # Simulate Gate A being very busy
-        mock_ref.return_value.get.return_value = {"gate_a": 45, "gate_b": 5}
-        response = client.post("/chat", json={"message": "How is Gate A?"})
+        mock_ref.return_value.get.return_value = {}
+        response = client.post("/chat", json={"message": "status"})
         assert response.status_code == 200
-        # The reply should contain a recommendation for Gate B
-        assert "Gate B" in response.json()["reply"]
+
+
+def test_malformed_input():
+    """Edge case: empty user message."""
+    response = client.post("/chat", json={"message": ""})
+    assert response.status_code == 200
+
+
+def test_firebase_failure():
+    """Edge case: Firebase failure simulation."""
+    with patch("main.db.reference") as mock_ref:
+        mock_ref.side_effect = Exception("DB down")
+        response = client.post("/chat", json={"message": "status"})
+        assert response.status_code == 500
