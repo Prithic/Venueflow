@@ -89,7 +89,7 @@ class HybridReasoningEngine:
             Tuple[str, str]: AI response and reasoning trace.
         """
         if not state:
-            return ("⚠️ Telemetry offline. Proceed to Main Atrium.", "Null State")
+            return ("⚠️ Telemetry link offline. Proceed to Main Atrium for manual guidance.", "Null State Failover")
 
         import difflib
         ranked = []
@@ -110,12 +110,14 @@ class HybridReasoningEngine:
         ranked.sort(key=lambda x: x['utility'], reverse=True)
         top = ranked[0]
 
+        # Layer 2 Trigger (Low Confidence)
         if top['similarity'] < 0.65:
             llm_reply: Optional[str] = await cls._call_llm(query, json.dumps(state))
             if llm_reply:
-                return (llm_reply, "LLM Boost")
+                return (llm_reply, f"L1 Utility: {round(top['utility'], 2)} | L2 Booster Active")
 
-        return (f"Go to {top['id']} ({top['wait']} mins)", "Deterministic")
+        # Fallback to Deterministic Decision
+        return (f"Autonomous Decision: Directing to {top['id'].replace('_', ' ').title()}.\n\nReasoning: Optimal utility match ({top['wait']}m wait).", f"L1 Utility: {round(top['utility'], 2)}")
 
 
 class ChatRequest(BaseModel):
@@ -135,11 +137,31 @@ async def serve_ui() -> FileResponse:
 
 @app.get("/health")
 async def health() -> Dict[str, str]:
-    return {"status": "ok"}
+    """
+    Health check endpoint for production monitoring.
+
+    Returns:
+        Dict[str, str]: Status and version information.
+    """
+    return {"status": "ok", "mode": "hybrid_v6_compliance"}
 
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_handler(request: ChatRequest) -> ChatResponse:
+    """
+    Processes autonomous reasoning queries via the Hybrid Intelligence Engine.
+
+    Args:
+        request (ChatRequest): Structured Pydantic model containing the user message.
+
+    Returns:
+        ChatResponse: A typed response object containing the AI reply, 
+            the reasoning trace, and a synchronized timestamp.
+    """
     state: Dict[str, Any] = db_ref.get() if db_ref else {}
     reply, thought = await HybridReasoningEngine.think(request.message, state or {})
-    return ChatResponse(reply=reply, thought_process=thought, timestamp=datetime.now().isoformat())
+    return ChatResponse(
+        reply=str(reply), 
+        thought_process=str(thought), 
+        timestamp=datetime.now().isoformat()
+    )

@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <title>VenueFlow | Autonomous Intelligence Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background: radial-gradient(circle at top left, #0f172a, #020617); color: #f8fafc; }
@@ -190,7 +193,18 @@
             databaseURL: "https://venueflow-945cc-default-rtdb.asia-southeast1.firebasedatabase.app"
         };
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const analytics = firebase.analytics();
+        console.log("Firebase Services Active: Auth, Analytics, RealtimeDB");
         const db = firebase.database();
+        
+        function trackChat(msg) {
+            if (typeof firebase !== 'undefined' && firebase.analytics) {
+                firebase.analytics().logEvent('chat_message', {
+                    message_length: msg.length
+                });
+            }
+        }
 
         const zoneIds = ['gate_a', 'gate_b', 'food_court', 'merch_stand'];
         zoneIds.forEach(id => {
@@ -238,6 +252,7 @@
             addBubble(msg, true);
             chatInput.value = '';
             addLog(`> executing_reasoning_loop: "${msg}"`);
+            trackChat(msg);
 
             try {
                 // Production-safe fetch to Render
