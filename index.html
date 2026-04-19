@@ -227,6 +227,9 @@
         const chatBox = document.getElementById('chat-box');
         const intelLog = document.getElementById('intel-log');
 
+        // PRODUCTION SETTING: Update this after Render deployment
+        const RENDER_URL = "https://venueflow-api.onrender.com"; 
+        
         chatForm.onsubmit = async (e) => {
             e.preventDefault();
             const msg = chatInput.value.trim();
@@ -234,22 +237,27 @@
 
             addBubble(msg, true);
             chatInput.value = '';
-            
             addLog(`> executing_reasoning_loop: "${msg}"`);
 
             try {
-                // Fixed: Use location.origin for production-safe API calls
-                const res = await fetch(`${window.location.origin}/chat`, {
+                // Determine API endpoint
+                const endpoint = window.location.hostname === 'localhost' ? '/chat' : `${RENDER_URL}/chat`;
+                
+                const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ message: msg })
                 });
+
+                if (!res.ok) throw new Error("API_UNREACHABLE");
+
                 const data = await res.json();
                 addBubble(data.reply, false);
                 addLog(`> reasoning_complete: ${data.thought_process}`);
             } catch (err) {
-                addBubble("Autonomous engine link severed. Switching to local telemetry failover.", false);
-                addLog(`> error: fetch_failed`);
+                addBubble("Autonomous engine link severed. Reverting to local telemetry failover.", false);
+                addLog(`> error: connection_failed [mode: failover]`);
+                console.error("Backend Error:", err);
             }
         };
 

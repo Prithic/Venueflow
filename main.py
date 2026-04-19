@@ -22,7 +22,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["https://venueflow-945cc.web.app", "http://localhost:8000"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -231,5 +232,6 @@ async def chat_handler(request: ChatRequest):
 
 if __name__ == "__main__":
     import uvicorn
+    # Render provides PORT via environment variable
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
