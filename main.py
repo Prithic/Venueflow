@@ -1,20 +1,22 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
 import firebase_admin
 from firebase_admin import credentials, db
 import os
+import httpx
+import json
+import difflib
 from datetime import datetime
 from dotenv import load_dotenv
-import re
 
 load_dotenv()
 
 app = FastAPI(
-    title="VenueFlow | Autonomous Reasoning Layer",
-    version="5.0.0",
-    description="High-fidelity stadium intelligence engine."
+    title="VenueFlow | Hybrid Reasoning Engine",
+    version="6.0.0",
+    description="2-Layer Hybrid Intelligence: Deterministic Utility + LLM Synthesis."
 )
 
 app.add_middleware(
@@ -24,16 +26,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Configuration & Initialization ---
-def initialize_persistence() -> Optional[db.Reference]:
+# --- Persistence Layer ---
+def get_db_ref() -> Optional[db.Reference]:
     """
-    Initializes the Firebase persistence layer using environment-only variables.
-
+    Initializes and returns a secure Firebase reference.
+    
+    Args:
+        None
     Returns:
-        Optional[db.Reference]: A reference to the database root or None if initialization fails.
-
+        Optional[db.Reference]: Database reference or None.
     Raises:
-        None: Fails gracefully without crashing the system.
+        None
     """
     db_url = os.getenv("FIREBASE_DATABASE_URL")
     cred_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
@@ -41,108 +44,117 @@ def initialize_persistence() -> Optional[db.Reference]:
     try:
         if not firebase_admin._apps:
             if cred_json:
-                import json
-                cred_dict = json.loads(cred_json)
-                cred = credentials.Certificate(cred_dict)
+                cred = credentials.Certificate(json.loads(cred_json))
                 firebase_admin.initialize_app(cred, {'databaseURL': db_url})
             else:
-                # Fallback to default credentials if specifically configured in environment
                 firebase_admin.initialize_app(options={'databaseURL': db_url})
         return db.reference('queues')
     except Exception:
         return None
 
-queues_ref = initialize_persistence()
+db_ref = get_db_ref()
 
-# --- Reasoning Engine ---
-class ReasoningEngine:
+# --- Hybrid Reasoning Engine ---
+class HybridReasoningEngine:
     """
-    Principal-grade reasoning engine utilizing semantic weighting and state-vector analysis.
+    Advanced 2-Layer Reasoning Engine combining semantic utility and LLM-backed synthesis.
     """
 
-    # Semantic intent mapping for context-aware weighting
-    INTENT_VECTORS = {
-        "ingress": ["gate", "entry", "entrance", "in", "arrival", "wait", "fast", "quick"],
-        "hospitality": ["food", "eat", "drink", "hungry", "hungry", "restaurant", "cafe", "court"],
-        "commerce": ["merch", "shop", "store", "jersey", "atrium", "buy", "shirt", "stand"]
-    }
-
-    ZONE_MAPPING = {
-        "gate_a": "ingress",
-        "gate_b": "ingress",
-        "food_court": "hospitality",
-        "merch_stand": "commerce"
-    }
+    CONFIDENCE_THRESHOLD = 0.65
 
     @staticmethod
-    def _calculate_relevance(query: str, category: str) -> float:
+    def _get_similarity(query: str, target: str) -> float:
         """
-        Calculates semantic relevance score between user query and zone categories.
-
+        Calculates normalized string similarity score.
+        
         Args:
-            query (str): The raw user input.
-            category (str): The target category (ingress, hospitality, commerce).
-
+            query (str): User query.
+            target (str): Zone identifier.
         Returns:
-            float: A weight multiplier based on detected intent (1.0 to 10.0).
+            float: Similarity score (0-1).
         """
-        tokens = re.findall(r'\w+', query.lower())
-        matches = sum(1 for token in tokens if token in ReasoningEngine.INTENT_VECTORS.get(category, []))
-        return 1.0 + (matches * 3.0)
+        target_norm = target.replace("_", " ").lower()
+        return difflib.SequenceMatcher(None, query.lower(), target_norm).ratio()
 
     @staticmethod
-    def think(user_query: str, state: Dict[str, Any]) -> tuple:
+    async def _call_llm(query: str, state: Dict[str, Any]) -> Optional[str]:
         """
-        Executes a context-weighted decision matrix to determine optimal routing.
-
+        Optional Layer 2: LLM Reasoning Booster.
+        
         Args:
-            user_query (str): The user's input string.
-            state (Dict[str, Any]): The current real-time state of the venue.
+            query (str): User query.
+            state (Dict[str, Any]): Full system state.
+        Returns:
+            Optional[str]: LLM generated response or None.
+        """
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return None
 
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        prompt = f"""
+        System State: {json.dumps(state)}
+        User Query: "{query}"
+        
+        Role: VenueFlow Oracle.
+        Task: Provide a context-aware routing decision based on the state.
+        Requirement: Be concise, empathetic, and data-driven.
+        """
+        
+        try:
+            async with httpx.AsyncClient() as client:
+                res = await client.post(url, json={"contents": [{"parts": [{"text": prompt}]}]})
+                return res.json()['candidates'][0]['content']['parts'][0]['text']
+        except Exception:
+            return None
+
+    @classmethod
+    async def think(cls, user_query: str, state: Dict[str, Any]) -> tuple:
+        """
+        Executes hybrid reasoning: Deterministic utility first, then optional LLM booster.
+        
+        Args:
+            user_query (str): The raw user query.
+            state (Dict[str, Any]): Real-time telemetry dictionary.
         Returns:
             tuple: (reply, thought_process)
         """
         if not state:
-            return (
-                "Telemetry stream interrupted. I am operating on last-known stable configuration.",
-                "Fallback: Zero-state detected in RTDB."
-            )
+            return ("Telemetry link offline. Reverting to safe-state defaults.", "Deterministic Fallback: Null State")
 
-        # Normalize state: ignore non-numeric telemetry nodes
-        active_zones = {k: v for k, v in state.items() if isinstance(v, (int, float))}
-        if not active_zones:
-            return ("All sectors reporting null state.", "Vector analysis failed: No numeric data.")
-
-        # Compute weighted utility scores for each zone
-        # Utility = (Intent Relevance) / (Wait Time + epsilon)
-        # We use inverse wait time because lower is better.
-        scored_zones = []
-        for zone, wait in active_zones.items():
-            category = ReasoningEngine.ZONE_MAPPING.get(zone, "general")
-            relevance = ReasoningEngine._calculate_relevance(user_query, category)
-            # Calculate utility: higher is better
-            utility = relevance / (wait + 1.0)
-            scored_zones.append({
-                "id": zone,
-                "wait": wait,
-                "utility": utility,
-                "name": zone.replace("_", " ").title()
-            })
-
-        # Rank zones by descending utility
-        ranked = sorted(scored_zones, key=lambda x: x["utility"], reverse=True)
-        top_recommendation = ranked[0]
+        # Layer 1: Deterministic Utility Engine
+        zones = {k: v for k, v in state.items() if isinstance(v, (int, float))}
+        scores = []
         
-        # Build contextual response
-        thought = f"Semantic utility matrix: {[{z['id']: round(z['utility'], 2)} for z in ranked]}"
+        for zone, wait in zones.items():
+            similarity = cls._get_similarity(user_query, zone)
+            # Utility formula: Similarity + Normalized Inverse Wait Time
+            utility = similarity + (1.0 / (wait + 1.0))
+            scores.append({"id": zone, "utility": utility, "wait": wait})
+
+        ranked = sorted(scores, key=lambda x: x["utility"], reverse=True)
+        top = ranked[0]
         
+        # Calculate Confidence Score (0-1)
+        total_utility = sum(s["utility"] for s in scores) or 1.0
+        confidence = top["utility"] / total_utility
+        
+        thought_trace = f"L1 Utility: {[{s['id']: round(s['utility'], 2)} for s in ranked]} | Confidence: {round(confidence, 2)}"
+
+        # Layer 2: LLM Booster (Optional / Triggered by low confidence)
+        if confidence < cls.CONFIDENCE_THRESHOLD:
+            llm_reply = await cls._call_llm(user_query, state)
+            if llm_reply:
+                return (llm_reply, f"{thought_trace} | L2 Booster Active")
+
+        # Fallback to Deterministic Decision
         reply = (
-            f"Autonomous Decision: Directing to {top_recommendation['name']}.\n\n"
-            f"Based on your query and real-time state vectors, this sector provides "
-            f"the highest throughput efficiency ({top_recommendation['wait']}m wait)."
+            f"Autonomous Decision: Directing to {top['id'].replace('_', ' ').title()}.\n\n"
+            f"Reasoning: Optimal utility match detected based on current throughput ({top['wait']}m wait) "
+            f"and semantic relevance."
         )
-
-        return reply, thought
+        
+        return (reply, thought_trace)
 
 # --- API Layer ---
 class ChatRequest(BaseModel):
@@ -154,39 +166,23 @@ class ChatResponse(BaseModel):
     timestamp: str
 
 @app.get("/health")
-def health_check():
-    """
-    Performs a system status audit.
-
-    Returns:
-        dict: Operational status.
-    """
-    return {"status": "operational", "telemetry": "active" if queues_ref else "disconnected"}
+def health():
+    """System health check."""
+    return {"status": "ok", "mode": "hybrid_v6"}
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_handler(request: ChatRequest):
     """
-    Primary interface for the Autonomous Reasoning Engine.
-
-    Args:
-        request (ChatRequest): Incoming user payload.
-
-    Returns:
-        ChatResponse: Formatted AI reasoning and response.
-
-    Raises:
-        None: All exceptions handled with graceful fallbacks.
+    Hybrid Intelligence endpoint.
     """
     try:
-        # Graceful fetch: App continues even if Firebase is unreachable
         current_state = {}
-        if queues_ref:
+        if db_ref:
             try:
-                current_state = queues_ref.get() or {}
-            except Exception:
-                pass 
-        
-        reply, thought = ReasoningEngine.think(request.message, current_state)
+                current_state = db_ref.get() or {}
+            except Exception: pass
+            
+        reply, thought = await HybridReasoningEngine.think(request.message, current_state)
         
         return ChatResponse(
             reply=reply,
@@ -194,10 +190,9 @@ async def chat_handler(request: ChatRequest):
             timestamp=datetime.now().isoformat()
         )
     except Exception as e:
-        # Maximum resilience: Never crash the endpoint
         return ChatResponse(
-            reply="The reasoning layer is currently recalibrating. Please proceed to the nearest steward.",
-            thought_process=f"Critical exception handled: {str(e)}",
+            reply="The reasoning layer is currently recalibrating.",
+            thought_process=f"Resilience override: {str(e)}",
             timestamp=datetime.now().isoformat()
         )
 
