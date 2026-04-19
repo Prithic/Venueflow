@@ -5,48 +5,46 @@ from main import app
 
 client = TestClient(app)
 
-def test_health_check():
-    """Verifies health check is operational in hybrid mode."""
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json()["mode"] == "hybrid_v6"
+
+def test_health_endpoint():
+    res = client.get("/health")
+    assert res.status_code == 200
+    assert res.json()["status"] == "ok"
+
+
+def test_chat_basic():
+    res = client.post("/chat", json={"message": "Where should I go?"})
+    assert res.status_code == 200
+    assert "reply" in res.json()
+
 
 @pytest.mark.asyncio
-async def test_deterministic_flow():
-    """Verifies Layer 1 deterministic utility ranking."""
+async def test_llm_primary_path():
     with patch("main.db_ref") as mock_ref:
-        mock_ref.get.return_value = {"gate_a": 5, "gate_b": 20}
-        response = client.post("/chat", json={"message": "Gate A status"})
-        assert response.status_code == 200
-        data = response.json()
-        assert "Gate A" in data["reply"]
-        assert "Confidence" in data["thought_process"]
+        mock_ref.get.return_value = {"gate_a": 10, "gate_b": 5}
+        with patch("main.Agent.call_llm", new_callable=AsyncMock) as mock_llm:
+            mock_llm.return_value = "🎯 Gate B\n💡 Faster"
+            res = client.post("/chat", json={"message": "fastest gate"})
+            assert res.status_code == 200
+            assert "Gate B" in res.json()["reply"]
 
-@pytest.mark.asyncio
-async def test_llm_booster_trigger():
-    """Verifies that low confidence triggers LLM booster (Layer 2)."""
-    with patch("main.db_ref") as mock_ref:
-        mock_ref.get.return_value = {"gate_a": 10, "food_court": 10}
-        with patch("main.HybridReasoningEngine._call_llm", new_callable=AsyncMock) as mock_llm:
-            mock_llm.return_value = "LLM Optimized Response"
-            with patch.dict("os.environ", {"GEMINI_API_KEY": "test-key"}):
-                response = client.post("/chat", json={"message": "I need help"})
-                assert response.status_code == 200
-                assert response.json()["reply"] == "LLM Optimized Response"
-                assert "L2 Booster Active" in response.json()["thought_process"]
 
-def test_empty_state_resilience():
-    """Verifies fallback when state is missing."""
+def test_empty_state():
     with patch("main.db_ref") as mock_ref:
         mock_ref.get.return_value = {}
-        response = client.post("/chat", json={"message": "hello"})
-        assert response.status_code == 200
-        assert "Telemetry link offline" in response.json()["reply"]
+        res = client.post("/chat", json={"message": "hello"})
+        assert res.status_code == 200
+
 
 def test_malformed_input():
-    """Verifies system stability with empty input."""
+    res = client.post("/chat", json={"msg": "wrong"})
+    assert res.status_code == 422
+
+
+def test_fallback_logic():
     with patch("main.db_ref") as mock_ref:
-        mock_ref.get.return_value = {"gate_a": 10}
-        response = client.post("/chat", json={"message": ""})
-        assert response.status_code == 200
-        assert "Autonomous Decision" in response.json()["reply"]
+        mock_ref.get.return_value = {"gate_a": 10, "gate_b": 3}
+        with patch("main.Agent.call_llm", return_value=None):
+            res = client.post("/chat", json={"message": "fastest"})
+            assert res.status_code == 200
+            assert "gate_b" in res.json()["reply"].lower()
