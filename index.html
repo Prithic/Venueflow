@@ -1,10 +1,81 @@
-<!-- ONLY MODIFY SCRIPT PART BELOW -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+<title>VenueFlow AI</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-analytics.js"></script>
+
+<style>
+body { font-family: Arial; background:#0f172a; color:white; }
+.container { max-width:800px; margin:auto; padding:20px; }
+.card { background:#1e293b; padding:15px; margin:10px 0; border-radius:10px; }
+button { padding:10px 15px; cursor:pointer; }
+input { padding:10px; width:70%; }
+</style>
+</head>
+<body>
+<main class="container">
+<h1>VenueFlow AI</h1>
+
+<section>
+<article class="card">
+<div id="chat-log" role="log" aria-live="polite"></div>
+</article>
+
+<article class="card">
+<input id="chat-input" aria-label="Enter your query" />
+<button onclick="sendMessage()" aria-label="Send message">Send</button>
+</article>
+</section>
+</main>
+
 <script>
-function trackChat(msg) {
-    if (typeof firebase !== 'undefined' && firebase.analytics) {
-        firebase.analytics().logEvent('chat_message', {
-            message_length: msg.length
-        });
-    }
+// Firebase Config (placeholder safe)
+const firebaseConfig = {
+  apiKey: "demo",
+  authDomain: "demo",
+  projectId: "demo",
+  appId: "demo"
+};
+
+firebase.initializeApp(firebaseConfig);
+const analytics = firebase.analytics();
+
+function logEventSafe(msg){
+  try{
+    analytics.logEvent('chat_message',{length:msg.length});
+  }catch(e){}
+}
+
+async function sendMessage(){
+  const input = document.getElementById('chat-input');
+  const log = document.getElementById('chat-log');
+  const msg = input.value;
+
+  log.innerHTML += `<div>👤 ${msg}</div>`;
+  logEventSafe(msg);
+
+  try{
+    const res = await fetch(`${window.location.origin}/chat`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({message:msg})
+    });
+
+    const data = await res.json();
+    log.innerHTML += `<div>🤖 ${data.reply}</div>`;
+  }catch(e){
+    log.innerHTML += `<div>⚠️ Connection failed</div>`;
+  }
+
+  input.value="";
 }
 </script>
+</body>
+</html>
