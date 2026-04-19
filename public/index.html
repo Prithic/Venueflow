@@ -227,7 +227,7 @@
         const chatBox = document.getElementById('chat-box');
         const intelLog = document.getElementById('intel-log');
 
-        // PRODUCTION SETTING: Update this after Render deployment
+        // PRODUCTION BACKEND URL
         const RENDER_URL = "https://venueflow-api.onrender.com"; 
         
         chatForm.onsubmit = async (e) => {
@@ -240,10 +240,8 @@
             addLog(`> executing_reasoning_loop: "${msg}"`);
 
             try {
-                // Determine API endpoint
-                const endpoint = window.location.hostname === 'localhost' ? '/chat' : `${RENDER_URL}/chat`;
-                
-                const res = await fetch(endpoint, {
+                // Production-safe fetch to Render
+                const res = await fetch(`${RENDER_URL}/chat`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ message: msg })
@@ -256,7 +254,7 @@
                 addLog(`> reasoning_complete: ${data.thought_process}`);
             } catch (err) {
                 addBubble("Autonomous engine link severed. Reverting to local telemetry failover.", false);
-                addLog(`> error: connection_failed [mode: failover]`);
+                addLog(`> error: connection_failed`);
                 console.error("Backend Error:", err);
             }
         };

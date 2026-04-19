@@ -22,7 +22,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://venueflow-945cc.web.app", "http://localhost:8000"],
+    allow_origins=["https://venueflow-945cc.web.app"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -185,17 +185,8 @@ def serve_ui():
 
 @app.get("/health")
 def health():
-    """
-    Verifies the system operational status and engine version.
-    
-    Args:
-        None
-    Returns:
-        dict: Status message and operational mode.
-    Raises:
-        None
-    """
-    return {"status": "ok", "mode": "hybrid_v6"}
+    """Health check for Render monitoring."""
+    return {"status": "ok"}
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_handler(request: ChatRequest):
