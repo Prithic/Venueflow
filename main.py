@@ -111,30 +111,52 @@ class ChatResponse(BaseModel):
     timestamp: str
 
 @app.get("/")
-async def serve_ui():
+async def serve_ui() -> FileResponse:
+    """
+    Serves the main frontend interface.
+
+    Returns:
+        FileResponse: The index.html file content.
+    """
     return FileResponse("index.html")
 
 @app.get("/health")
-async def health():
-    """Health check for Render monitoring."""
-    return {"status": "ok", "mode": "hybrid_v6"}
+async def health() -> Dict[str, str]:
+    """
+    Health check endpoint for production monitoring.
+
+    Returns:
+        Dict[str, str]: Status and version information.
+    """
+    return {"status": "ok", "mode": "hybrid_v6_compliance"}
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_handler(request: ChatRequest) -> ChatResponse:
     """
-    Handles autonomous reasoning queries by interfacing with the Hybrid Reasoning Engine.
+    Processes autonomous reasoning queries via the Hybrid Intelligence Engine.
 
     Args:
-        request (ChatRequest): The incoming user message wrapped in a Pydantic model.
+        request (ChatRequest): Structured Pydantic model containing the user message.
 
     Returns:
-        ChatResponse: A structured response containing the agent's reply, 
-                     the thought process trace, and a ISO-formatted timestamp.
+        ChatResponse: A typed response object containing the AI reply, 
+            the reasoning trace, and a synchronized timestamp.
+
+    Raises:
+        HTTPException: If the telemetry database reference is unavailable.
     """
-    state = db_ref.get() if db_ref else {}
-    reply, thought = await HybridReasoningEngine.think(request.message, state or {})
+    if not db_ref:
+        raise HTTPException(status_code=503, detail="Telemetry Link Offline")
+        
+    # Async execution of reasoning logic
+    state: Dict[str, Any] = db_ref.get() or {}
+    reply, thought = await HybridReasoningEngine.think(
+        query=request.message, 
+        state=state
+    )
+    
     return ChatResponse(
-        reply=reply, 
-        thought_process=thought, 
+        reply=str(reply),
+        thought_process=str(thought),
         timestamp=datetime.now().isoformat()
     )

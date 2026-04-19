@@ -1,16 +1,15 @@
-# Byte-compiled / optimized / DLL files
+# Security & Environment
+.env
+serviceAccountKey.json
+
+# Python Hygiene
 __pycache__/
+venv/
+env/
 *.py[cod]
 *$py.class
 
-# Virtual Environments
-.env
-.venv/
-venv/
-ENV/
-env/
-
-# Firebase & IDE
+# Testing & Cache
+.pytest_cache/
 .firebase/
-.vscode/
-serviceAccountKey.json
+.DS_Store

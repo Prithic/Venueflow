@@ -193,8 +193,9 @@
             databaseURL: "https://venueflow-945cc-default-rtdb.asia-southeast1.firebasedatabase.app"
         };
         firebase.initializeApp(firebaseConfig);
-        firebase.auth();
-        firebase.analytics();
+        const auth = firebase.auth();
+        const analytics = firebase.analytics();
+        console.log("Firebase Services Active: Auth, Analytics, RealtimeDB");
         const db = firebase.database();
 
         const zoneIds = ['gate_a', 'gate_b', 'food_court', 'merch_stand'];

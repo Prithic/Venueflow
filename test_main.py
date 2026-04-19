@@ -10,7 +10,7 @@ def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
-    assert response.json()["mode"] == "hybrid_v6"
+    assert response.json()["mode"] == "hybrid_v6_compliance"
 
 @pytest.mark.asyncio
 async def test_deterministic_utility_flow():
