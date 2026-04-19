@@ -152,13 +152,20 @@ class HybridReasoningEngine:
             if llm_reply:
                 return (llm_reply, f"{thought_trace} | L2 Booster Active")
 
-        # Fallback to Deterministic Decision
+        # Fallback to Deterministic Decision (Comparative Reasoning)
         reply = (
             f"Autonomous Decision: Directing to {top['id'].replace('_', ' ').title()}.\n\n"
-            f"Reasoning: Optimal utility match detected based on current throughput ({top['wait']}m wait) "
-            f"and semantic relevance."
+            f"Reasoning: Optimal utility match ({top['wait']}m wait). "
         )
         
+        # Comparative Logic: Check if another zone is significantly faster
+        faster_zones = [z for z in ranked[1:] if z['wait'] < top['wait']]
+        if faster_zones:
+            best_alt = faster_zones[0]
+            reply += f"Note: While {best_alt['id'].replace('_', ' ').title()} is faster ({best_alt['wait']}m), {top['id'].replace('_', ' ').title()} offers higher semantic relevance to your query."
+        else:
+            reply += "Semantic anchors and throughput are currently balanced for this sector."
+            
         return (reply, thought_trace)
 
 # --- API Layer ---
