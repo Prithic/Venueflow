@@ -14,16 +14,13 @@
         .glow-indigo { box-shadow: 0 0 30px rgba(99, 102, 241, 0.1); }
         .terminal-font { font-family: 'Fira Code', monospace; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        @keyframes scan { from { transform: translateY(-100%); } to { transform: translateY(100%); } }
-        .scan-line { animation: scan 3s linear infinite; background: linear-gradient(to bottom, transparent, rgba(99, 102, 241, 0.2), transparent); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col p-4 md:p-8 gap-6 overflow-x-hidden">
 
     <header role="banner" aria-label="VenueFlow Intelligence Hub" class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white/5 p-6 rounded-[2rem] border border-white/10 glow-indigo relative overflow-hidden">
-        <div class="scan-line absolute inset-0 pointer-events-none"></div>
-        <div class="flex items-center gap-4 relative z-10" role="region" aria-label="System Identity">
-            <div role="img" aria-label="Neural Network Node Logo" class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.5)]">
+        <div class="flex items-center gap-4 relative z-10">
+            <div role="img" aria-label="VenueFlow Logo" class="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(79,70,229,0.5)]">
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
             <div>
@@ -33,13 +30,10 @@
         </div>
 
         <div id="ai-insight-banner" role="status" aria-live="polite" class="flex-1 max-w-2xl bg-indigo-500/10 border border-indigo-500/20 px-6 py-4 rounded-2xl flex items-center gap-4 opacity-0 transition-all duration-700">
-            <div class="flex-shrink-0 w-8 h-8 bg-indigo-500/20 rounded-full flex items-center justify-center">
-                <span class="relative flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-indigo-500"></span></span>
-            </div>
             <p id="ai-recommendation" class="text-sm font-semibold text-indigo-100 italic">Synchronizing autonomous telemetry...</p>
         </div>
 
-        <div class="flex items-center gap-4" role="region" aria-label="Operations Overview">
+        <div class="flex items-center gap-4">
             <div class="text-right hidden lg:block">
                 <p id="live-timer" class="text-xs font-mono text-white/40 terminal-font">00:00:00</p>
                 <p class="text-[10px] font-black text-green-400 uppercase tracking-widest">State: Nominal</p>
@@ -50,19 +44,19 @@
         </div>
     </header>
 
-    <main role="main" class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 min-h-0">
         
-        <section aria-label="Live Telemetry Monitoring Grid" class="lg:col-span-8 flex flex-col gap-6" role="region">
+        <section aria-label="Live Telemetry Monitoring Grid" class="lg:col-span-8 flex flex-col gap-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Gate A -->
-                <article id="card-gate_a" role="region" aria-label="Gate A Status: Initializing" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:scale-[1.01] border-l-4 border-transparent">
+                <article id="card-gate_a" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:scale-[1.01] border-l-4 border-transparent" aria-labelledby="title-gate_a">
                     <header class="flex justify-between items-start">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-indigo-500/50 transition-colors">
                                 <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
                             </div>
                             <div>
-                                <h2 class="font-bold text-white/90">Gate A</h2>
+                                <h2 id="title-gate_a" class="font-bold text-white/90">Gate A</h2>
                                 <p class="text-[10px] font-black text-white/20 uppercase tracking-widest">Terminal North</p>
                             </div>
                         </div>
@@ -70,27 +64,24 @@
                     </header>
                     <div class="my-8">
                         <div class="flex items-baseline gap-2">
-                            <span id="wait-gate_a" class="text-7xl font-black tracking-tighter italic">--</span>
+                            <span id="wait-gate_a" class="text-7xl font-black tracking-tighter italic" aria-live="polite">--</span>
                             <span class="text-xl font-bold text-white/20 uppercase">Min</span>
                         </div>
                     </div>
                     <footer class="flex items-center justify-between border-t border-white/5 pt-4">
-                        <div class="flex items-center gap-2">
-                            <div id="dot-gate_a" class="w-2 h-2 rounded-full bg-white/20"></div>
-                            <span id="desc-gate_a" class="text-[11px] font-bold text-white/40 uppercase">Awaiting Feed...</span>
-                        </div>
+                        <span id="desc-gate_a" class="text-[11px] font-bold text-white/40 uppercase">Awaiting Feed...</span>
                     </footer>
                 </article>
 
                 <!-- Gate B -->
-                <article id="card-gate_b" role="region" aria-label="Gate B Status: Initializing" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:scale-[1.01] border-l-4 border-transparent">
+                <article id="card-gate_b" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:scale-[1.01] border-l-4 border-transparent" aria-labelledby="title-gate_b">
                     <header class="flex justify-between items-start">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-indigo-500/50 transition-colors">
                                 <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/></svg>
                             </div>
                             <div>
-                                <h2 class="font-bold text-white/90">Gate B</h2>
+                                <h2 id="title-gate_b" class="font-bold text-white/90">Gate B</h2>
                                 <p class="text-[10px] font-black text-white/20 uppercase tracking-widest">Terminal South</p>
                             </div>
                         </div>
@@ -98,27 +89,24 @@
                     </header>
                     <div class="my-8">
                         <div class="flex items-baseline gap-2">
-                            <span id="wait-gate_b" class="text-7xl font-black tracking-tighter italic">--</span>
+                            <span id="wait-gate_b" class="text-7xl font-black tracking-tighter italic" aria-live="polite">--</span>
                             <span class="text-xl font-bold text-white/20 uppercase">Min</span>
                         </div>
                     </div>
                     <footer class="flex items-center justify-between border-t border-white/5 pt-4">
-                        <div class="flex items-center gap-2">
-                            <div id="dot-gate_b" class="w-2 h-2 rounded-full bg-white/20"></div>
-                            <span id="desc-gate_b" class="text-[11px] font-bold text-white/40 uppercase">Awaiting Feed...</span>
-                        </div>
+                        <span id="desc-gate_b" class="text-[11px] font-bold text-white/40 uppercase">Awaiting Feed...</span>
                     </footer>
                 </article>
 
                 <!-- Food Court -->
-                <article id="card-food_court" role="region" aria-label="Food Court Status: Initializing" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:scale-[1.01] border-l-4 border-transparent">
+                <article id="card-food_court" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:scale-[1.01] border-l-4 border-transparent" aria-labelledby="title-food_court">
                     <header class="flex justify-between items-start">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-indigo-500/50 transition-colors">
                                 <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-1.5-.454M3 8V4a1 1 0 011-1h16a1 1 0 011 1v4M3 12v7a2 2 0 002 2h14a2 2 0 002-2v-7"/></svg>
                             </div>
                             <div>
-                                <h2 class="font-bold text-white/90">Food Court</h2>
+                                <h2 id="title-food_court" class="font-bold text-white/90">Food Court</h2>
                                 <p class="text-[10px] font-black text-white/20 uppercase tracking-widest">Hospitality Zone</p>
                             </div>
                         </div>
@@ -126,27 +114,24 @@
                     </header>
                     <div class="my-8">
                         <div class="flex items-baseline gap-2">
-                            <span id="wait-food_court" class="text-7xl font-black tracking-tighter italic">--</span>
+                            <span id="wait-food_court" class="text-7xl font-black tracking-tighter italic" aria-live="polite">--</span>
                             <span class="text-xl font-bold text-white/20 uppercase">Min</span>
                         </div>
                     </div>
                     <footer class="flex items-center justify-between border-t border-white/5 pt-4">
-                        <div class="flex items-center gap-2">
-                            <div id="dot-food_court" class="w-2 h-2 rounded-full bg-white/20"></div>
-                            <span id="desc-food_court" class="text-[11px] font-bold text-white/40 uppercase">Awaiting Feed...</span>
-                        </div>
+                        <span id="desc-food_court" class="text-[11px] font-bold text-white/40 uppercase">Awaiting Feed...</span>
                     </footer>
                 </article>
 
                 <!-- Merch Stand -->
-                <article id="card-merch_stand" role="region" aria-label="Merch Stand Status: Initializing" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:scale-[1.01] border-l-4 border-transparent">
+                <article id="card-merch_stand" class="glass rounded-[2.5rem] p-8 flex flex-col justify-between group transition-all duration-500 hover:scale-[1.01] border-l-4 border-transparent" aria-labelledby="title-merch_stand">
                     <header class="flex justify-between items-start">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-indigo-500/50 transition-colors">
                                 <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
                             </div>
                             <div>
-                                <h2 class="font-bold text-white/90">Merch Stand</h2>
+                                <h2 id="title-merch_stand" class="font-bold text-white/90">Merch Stand</h2>
                                 <p class="text-[10px] font-black text-white/20 uppercase tracking-widest">Main Atrium</p>
                             </div>
                         </div>
@@ -154,54 +139,42 @@
                     </header>
                     <div class="my-8">
                         <div class="flex items-baseline gap-2">
-                            <span id="wait-merch_stand" class="text-7xl font-black tracking-tighter italic">--</span>
+                            <span id="wait-merch_stand" class="text-7xl font-black tracking-tighter italic" aria-live="polite">--</span>
                             <span class="text-xl font-bold text-white/20 uppercase">Min</span>
                         </div>
                     </div>
                     <footer class="flex items-center justify-between border-t border-white/5 pt-4">
-                        <div class="flex items-center gap-2">
-                            <div id="dot-merch_stand" class="w-2 h-2 rounded-full bg-white/20"></div>
-                            <span id="desc-merch_stand" class="text-[11px] font-bold text-white/40 uppercase">Awaiting Feed...</span>
-                        </div>
+                        <span id="desc-merch_stand" class="text-[11px] font-bold text-white/40 uppercase">Awaiting Feed...</span>
                     </footer>
                 </article>
             </div>
 
-            <!-- System Intelligence Log -->
-            <div class="flex-1 glass rounded-[2.5rem] p-6 border border-white/5 bg-black/40 overflow-hidden flex flex-col" role="region" aria-label="System Intelligence Log">
+            <div class="flex-1 glass rounded-[2.5rem] p-6 border border-white/5 bg-black/40 overflow-hidden flex flex-col" aria-label="System Intelligence Log">
                 <div class="flex items-center justify-between mb-4 border-b border-white/5 pb-2">
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
-                        <span class="text-[10px] font-black uppercase tracking-widest text-indigo-400">Autonomous Reasoning Log</span>
-                    </div>
-                    <span class="text-[9px] font-mono text-white/20">v3.0_STABLE</span>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-indigo-400">Autonomous Reasoning Log</span>
+                    <span class="text-[9px] font-mono text-white/20">v5.0_STABLE</span>
                 </div>
                 <div id="intel-log" class="flex-1 overflow-y-auto terminal-font text-[11px] text-indigo-100/40 space-y-1 no-scrollbar" role="log" aria-live="polite">
                     <p>> initializing_telemetry_sync...</p>
-                    <p>> neural_layer_active</p>
                 </div>
             </div>
         </section>
 
-        <aside role="complementary" aria-label="AI Command Terminal" class="lg:col-span-4 flex flex-col gap-6 min-h-0">
+        <aside class="lg:col-span-4 flex flex-col gap-6 min-h-0" aria-label="AI Command Terminal">
             <div class="flex-1 glass rounded-[2.5rem] flex flex-col overflow-hidden glow-indigo border border-white/5">
                 <header class="p-8 border-b border-white/5 bg-white/[0.02]">
                     <h2 class="text-lg font-bold tracking-tight uppercase">Intelligence Terminal</h2>
-                    <p class="text-[10px] font-bold text-white/30 uppercase tracking-widest">Autonomous Agent v3</p>
+                    <p class="text-[10px] font-bold text-white/30 uppercase tracking-widest">Autonomous Agent v5</p>
                 </header>
                 
-                <div id="chat-box" class="flex-1 overflow-y-auto p-8 flex flex-col gap-6 no-scrollbar" role="log" aria-live="polite">
-                    <div class="bg-indigo-600/10 border border-indigo-500/20 p-5 rounded-[1.5rem] rounded-tl-none text-sm text-indigo-100/90 shadow-lg">
-                        Telemetry synchronized. I have initialized the reasoning loop. How may I optimize your traversal?
-                    </div>
-                </div>
+                <div id="chat-box" class="flex-1 overflow-y-auto p-8 flex flex-col gap-6 no-scrollbar" role="log" aria-live="polite"></div>
 
                 <footer class="p-6 bg-black/20 border-t border-white/5">
                     <form id="chat-form" class="relative group">
                         <input id="chat-input" type="text" placeholder="Analyze entry efficiency..." 
                                class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-sm focus:outline-none focus:border-indigo-500 focus:bg-white/[0.08] transition-all pr-20 placeholder:text-white/20"
-                               aria-label="Enter query for Autonomous Reasoning Engine">
-                        <button type="submit" class="absolute right-2 top-2 w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 transition-all shadow-lg" aria-label="Transmit Payload">
+                               aria-label="Enter query for Reasoning Engine">
+                        <button type="submit" class="absolute right-2 top-2 w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center hover:bg-indigo-500 transition-all shadow-lg" aria-label="Send query">
                             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         </button>
                     </form>
@@ -212,7 +185,6 @@
 
     <script>
         const firebaseConfig = {
-            apiKey: "",
             authDomain: "venueflow-945cc.firebaseapp.com",
             projectId: "venueflow-945cc",
             databaseURL: "https://venueflow-945cc-default-rtdb.asia-southeast1.firebasedatabase.app"
@@ -230,7 +202,6 @@
         function updateCard(id, val) {
             const waitEl = document.getElementById(`wait-${id}`);
             const labelEl = document.getElementById(`label-${id}`);
-            const dotEl = document.getElementById(`dot-${id}`);
             const descEl = document.getElementById(`desc-${id}`);
             const cardEl = document.getElementById(`card-${id}`);
 
@@ -238,22 +209,9 @@
             waitEl.innerText = val;
             
             let color, status, desc;
-            if (val < 10) {
-                color = 'text-green-400';
-                status = 'Optimal';
-                desc = 'Fluid Flow';
-                cardEl.className = cardEl.className.replace(/border-l-4 border-\w+-500/, 'border-l-4 border-green-500');
-            } else if (val <= 25) {
-                color = 'text-yellow-400';
-                status = 'Moderate';
-                desc = 'Stable Sync';
-                cardEl.className = cardEl.className.replace(/border-l-4 border-\w+-500/, 'border-l-4 border-yellow-500');
-            } else {
-                color = 'text-red-400';
-                status = 'Critical';
-                desc = 'High Load';
-                cardEl.className = cardEl.className.replace(/border-l-4 border-\w+-500/, 'border-l-4 border-red-500');
-            }
+            if (val < 15) { color = 'text-green-400'; status = 'Optimal'; desc = 'Fluid Flow'; }
+            else if (val <= 30) { color = 'text-yellow-400'; status = 'Moderate'; desc = 'Stable Sync'; }
+            else { color = 'text-red-400'; status = 'Critical'; desc = 'High Load'; }
 
             waitEl.className = `text-7xl font-black tracking-tighter italic ${color} transition-colors duration-500`;
             labelEl.innerText = status;
@@ -261,33 +219,7 @@
             descEl.innerText = desc;
             descEl.className = `text-[11px] font-bold ${color} uppercase`;
             
-            // Deep ARIA-label state mapping
-            const zoneName = id.replace('_', ' ').toUpperCase();
-            cardEl.setAttribute('aria-label', `${zoneName} State Analysis: ${val} minutes wait time. Flow status is currently ${status}.`);
-
-            generateAIIntelligence();
-        }
-
-        async function generateAIIntelligence() {
-            const snap = await db.ref('queues').once('value');
-            const data = snap.val() || {};
-            const banner = document.getElementById('ai-insight-banner');
-            const text = document.getElementById('ai-recommendation');
-            
-            let advice = "Telemetry nominal. Monitoring flow...";
-            let alert = false;
-
-            if (data.gate_a > 25 && data.gate_b <= 25) {
-                advice = `CONGESTION DETECTED: Route all traffic to Gate B (${data.gate_b}m wait).`;
-                alert = true;
-            } else if (data.gate_b > 25 && data.gate_a <= 25) {
-                advice = `CONGESTION DETECTED: Route all traffic to Gate A (${data.gate_a}m wait).`;
-                alert = true;
-            }
-
-            text.innerText = advice;
-            banner.style.opacity = "1";
-            banner.className = alert ? "flex-1 max-w-2xl bg-red-500/10 border border-red-500/30 px-6 py-4 rounded-2xl flex items-center gap-4 transition-all duration-500" : "flex-1 max-w-2xl bg-indigo-500/10 border border-indigo-500/20 px-6 py-4 rounded-2xl flex items-center gap-4 transition-all duration-500";
+            cardEl.setAttribute('aria-label', `${id.replace('_', ' ')}: ${val} minutes wait time. ${status}.`);
         }
 
         const chatForm = document.getElementById('chat-form');
@@ -303,12 +235,11 @@
             addBubble(msg, true);
             chatInput.value = '';
             
-            // Log reasoning start
             addLog(`> executing_reasoning_loop: "${msg}"`);
 
             try {
-                // Using relative path for production API gateway
-                const res = await fetch('/chat', {
+                // Fixed: Use location.origin for production-safe API calls
+                const res = await fetch(`${window.location.origin}/chat`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ message: msg })
@@ -318,7 +249,7 @@
                 addLog(`> reasoning_complete: ${data.thought_process}`);
             } catch (err) {
                 addBubble("Autonomous engine link severed. Switching to local telemetry failover.", false);
-                addLog(`> error: fetch_failed [retrying_in_background]`);
+                addLog(`> error: fetch_failed`);
             }
         };
 
