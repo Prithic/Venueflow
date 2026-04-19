@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
@@ -38,7 +39,7 @@ def get_db_ref() -> Optional[db.Reference]:
     Raises:
         None
     """
-    db_url = os.getenv("FIREBASE_DATABASE_URL")
+    db_url = os.getenv("FIREBASE_DATABASE_URL") or "https://venueflow-945cc-default-rtdb.asia-southeast1.firebasedatabase.app"
     cred_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
     
     try:
@@ -46,7 +47,11 @@ def get_db_ref() -> Optional[db.Reference]:
             if cred_json:
                 cred = credentials.Certificate(json.loads(cred_json))
                 firebase_admin.initialize_app(cred, {'databaseURL': db_url})
+            elif os.path.exists("serviceAccountKey.json"):
+                cred = credentials.Certificate("serviceAccountKey.json")
+                firebase_admin.initialize_app(cred, {'databaseURL': db_url})
             else:
+                # Fallback to default auth if possible
                 firebase_admin.initialize_app(options={'databaseURL': db_url})
         return db.reference('queues')
     except Exception:
@@ -165,15 +170,36 @@ class ChatResponse(BaseModel):
     thought_process: str
     timestamp: str
 
+@app.get("/")
+def serve_ui():
+    """Serves the primary intelligence dashboard."""
+    return FileResponse("index.html")
+
 @app.get("/health")
 def health():
-    """System health check."""
+    """
+    Verifies the system operational status and engine version.
+    
+    Args:
+        None
+    Returns:
+        dict: Status message and operational mode.
+    Raises:
+        None
+    """
     return {"status": "ok", "mode": "hybrid_v6"}
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_handler(request: ChatRequest):
     """
-    Hybrid Intelligence endpoint.
+    Processes user queries through the 2-layer hybrid reasoning engine.
+    
+    Args:
+        request (ChatRequest): The incoming user message payload.
+    Returns:
+        ChatResponse: Synthesized reply, internal thought process, and timestamp.
+    Raises:
+        None: Errors are handled gracefully with a resilience fallback.
     """
     try:
         current_state = {}
