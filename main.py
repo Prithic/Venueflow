@@ -37,65 +37,70 @@ def get_db_ref():
 
 db_ref = get_db_ref()
 
-# Agent Engine
-class Agent:
+# --- Hybrid Reasoning Engine ---
+class HybridReasoningEngine:
+    """
+    2-Layer Hybrid Intelligence Engine.
+    Layer 1: Deterministic Utility Matrix (difflib + telemetry).
+    Layer 2: Generative Context Synthesis (Gemini 1.5 Flash).
+    """
 
     @staticmethod
-    async def call_llm(query: str, state: Dict[str, Any]) -> Optional[str]:
+    async def _call_llm(query: str, state: str) -> Optional[str]:
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key:
             return None
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
-
-        prompt = f"""
-You are VenueFlow AI.
-
-STATE:
-{json.dumps(state)}
-
-USER:
-{query}
-
-TASK:
-- Compare all zones
-- Choose best option
-- Explain tradeoffs
-
-Return JSON:
-{{"decision":"...","reason":"...","alternatives":[{{"zone":"...","note":"..."}}]}}
-"""
+        prompt = f"System State: {state}\nUser Query: {query}\nTask: Act as a stadium navigation expert. Compare zones and suggest the best one with trade-offs. Return a concise, premium response."
 
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
+            async with httpx.AsyncClient(timeout=10.0) as client:
                 res = await client.post(url, json={"contents":[{"parts":[{"text":prompt}]}]})
-                text = res.json()['candidates'][0]['content']['parts'][0]['text']
-                return Agent.format(text)
+                return res.json()['candidates'][0]['content']['parts'][0]['text']
         except Exception:
             return None
 
-    @staticmethod
-    def format(raw):
-        try:
-            data = json.loads(raw)
-            alt = "\n".join([f"- {a['zone']}: {a['note']}" for a in data.get("alternatives",[])])
-            return f"🎯 {data['decision']}\n💡 {data['reason']}\n{alt}"
-        except:
-            return raw
-
     @classmethod
-    async def think(cls, query, state):
+    async def think(cls, query: str, state: Dict[str, Any]) -> tuple:
         if not state:
-            return ("No data available","fallback")
+            return ("⚠️ Telemetry link offline. Proceed to Main Atrium for manual guidance.", "Null State Failover")
 
-        zones = [{"id":k,"wait":v} for k,v in state.items() if isinstance(v,(int,float))]
+        import difflib
+        ranked = []
+        for zone_id, wait in state.items():
+            if not isinstance(wait, (int, float)): continue
+            
+            # Semantic Similarity (0.0 to 1.0)
+            similarity = difflib.SequenceMatcher(None, query.lower(), zone_id.replace('_', ' ')).ratio()
+            # Throughput Utility (Higher wait = Lower utility)
+            throughput = 1.0 / (wait + 1.0)
+            
+            ranked.append({
+                "id": zone_id,
+                "wait": wait,
+                "utility": (similarity * 0.7) + (throughput * 0.3),
+                "similarity": similarity
+            })
 
-        llm = await cls.call_llm(query,{"zones":zones})
-        if llm:
-            return (llm,"LLM")
+        ranked.sort(key=lambda x: x['utility'], reverse=True)
+        top = ranked[0]
+        thought_trace = f"L1 Utility: {[ {r['id']: round(r['utility'], 2)} for r in ranked[:3] ]} | Confidence: {round(top['similarity'], 2)}"
 
-        best = min(zones,key=lambda x:x['wait'])
-        return (f"Go to {best['id']} ({best['wait']} mins)","fallback")
+        # Layer 2 Trigger (Low Confidence)
+        if top['similarity'] < 0.65:
+            llm_reply = await cls._call_llm(query, json.dumps(state))
+            if llm_reply:
+                return (llm_reply, f"{thought_trace} | L2 Booster Active")
+
+        # Fallback to Deterministic Decision
+        reply = f"Autonomous Decision: Directing to {top['id'].replace('_', ' ').title()}.\n\nReasoning: Optimal utility match ({top['wait']}m wait). "
+        
+        faster = [z for z in ranked[1:] if z['wait'] < top['wait']]
+        if faster:
+            reply += f"Note: While {faster[0]['id'].replace('_', ' ').title()} is faster ({faster[0]['wait']}m), {top['id'].replace('_', ' ').title()} is more relevant to your request."
+            
+        return (reply, thought_trace)
 
 class ChatRequest(BaseModel):
     message: str
@@ -111,10 +116,11 @@ def serve_ui():
 
 @app.get("/health")
 def health():
-    return {"status":"ok"}
+    """Health check for Render monitoring."""
+    return {"status": "ok", "mode": "hybrid_v6"}
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat_handler(request: ChatRequest):
     state = db_ref.get() if db_ref else {}
-    reply,thought = await Agent.think(request.message,state or {})
+    reply, thought = await HybridReasoningEngine.think(request.message, state or {})
     return ChatResponse(reply=reply, thought_process=thought, timestamp=datetime.now().isoformat())
