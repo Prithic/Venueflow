@@ -1,7 +1,16 @@
-.venv/
+# Byte-compiled / optimized / DLL files
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Virtual Environments
 .env
-serviceAccountKey.json
+.venv/
+venv/
+ENV/
+env/
+
+# Firebase & IDE
 .firebase/
 .vscode/
+serviceAccountKey.json

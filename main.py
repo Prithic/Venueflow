@@ -111,16 +111,30 @@ class ChatResponse(BaseModel):
     timestamp: str
 
 @app.get("/")
-def serve_ui():
+async def serve_ui():
     return FileResponse("index.html")
 
 @app.get("/health")
-def health():
+async def health():
     """Health check for Render monitoring."""
     return {"status": "ok", "mode": "hybrid_v6"}
 
 @app.post("/chat", response_model=ChatResponse)
-async def chat_handler(request: ChatRequest):
+async def chat_handler(request: ChatRequest) -> ChatResponse:
+    """
+    Handles autonomous reasoning queries by interfacing with the Hybrid Reasoning Engine.
+
+    Args:
+        request (ChatRequest): The incoming user message wrapped in a Pydantic model.
+
+    Returns:
+        ChatResponse: A structured response containing the agent's reply, 
+                     the thought process trace, and a ISO-formatted timestamp.
+    """
     state = db_ref.get() if db_ref else {}
     reply, thought = await HybridReasoningEngine.think(request.message, state or {})
-    return ChatResponse(reply=reply, thought_process=thought, timestamp=datetime.now().isoformat())
+    return ChatResponse(
+        reply=reply, 
+        thought_process=thought, 
+        timestamp=datetime.now().isoformat()
+    )
